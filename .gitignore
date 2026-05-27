@@ -157,3 +157,5 @@ data/*.db
 data/*.db-journal
 logs/*.log
 reports/cleaned_orders_latest.csv
+
+.vercel
