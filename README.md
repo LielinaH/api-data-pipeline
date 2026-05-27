@@ -1,6 +1,9 @@
 # API Data Pipeline & Automated Reporting System (FluxETL)
 
-A production-grade, highly visual data engineering and full-stack automation project. This system fetches raw transactional data from an API source, runs a structured cleaning and validation engine, stores transactions in a query-ready SQLite database, updates an interactive glassmorphic dashboard, and exports report sheets automatically.
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live_Demo-blue?style=flat-square&logo=vercel&logoColor=white)](https://fluxetl.vercel.app)
+**Live Application URL:** [https://fluxetl.vercel.app](https://fluxetl.vercel.app)
+
+A production-grade, highly visual data engineering and full-stack data automation project. This system fetches raw transactional data from an API source, runs a structured cleaning and validation engine, stores transactions in a query-ready SQLite database, updates an interactive glassmorphic dashboard, and exports report sheets automatically.
 
 Designed to showcase capability in **API Integration**, **Data Validation (Pydantic)**, **Database Architecture**, **Task Scheduling**, and **Internal Dashboard Tooling**.
 
