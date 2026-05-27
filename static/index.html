@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL Data Pipeline & Quality Control Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg class="custom-logo-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path class="hexagon" d="M12 2L20.66 7V17L12 22L3.34 17V7L12 2Z" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle class="node node-top" cx="12" cy="7" r="2" fill="#fff"/>
+                        <circle class="node node-left" cx="7" cy="15" r="2" fill="#fff"/>
+                        <circle class="node node-right" cx="17" cy="15" r="2" fill="#fff"/>
+                        <path class="link link-down" d="M12 9V14" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="link link-left" d="M10.5 15.5L8.5 16.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                        <path class="link link-right" d="M13.5 15.5L15.5 16.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#38bdf8" />
+                                <stop offset="100%" stop-color="#0284c7" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div>
+                    <h2>FluxETL</h2>
+                    <p class="tagline">Data Engine v1.0</p>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" id="btn-nav-overview">
+                    <i data-lucide="layout-dashboard"></i> Overview
+                </a>
+                <a href="#runs-history" class="nav-item" id="btn-nav-history">
+                    <i data-lucide="history"></i> Run History
+                </a>
+                <a href="#validation-errors" class="nav-item" id="btn-nav-errors">
+                    <i data-lucide="shield-alert"></i> Validation Logs
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="scheduler-badge">
+                    <div class="status-indicator-dot pulsing"></div>
+                    <div>
+                        <span class="badge-label">Scheduler Active</span>
+                        <span class="badge-sub">Poll: Every 5 mins</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="header-bar">
+                <div class="header-title">
+                    <h1>Operations Control Center</h1>
+                    <p>API Data Integration & Quality Reporting</p>
+                </div>
+                
+                <div class="actions-group">
+                    <button class="btn btn-secondary" id="btn-export-csv" title="Download database to CSV">
+                        <i data-lucide="download-cloud"></i> Export CSV
+                    </button>
+                    <button class="btn btn-primary" id="btn-trigger-pipeline">
+                        <i data-lucide="play-circle"></i> Run Pipeline
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Sections -->
+            <div class="content-container">
+                
+                <!-- Overview Section -->
+                <section id="section-overview" class="dashboard-section active">
+                    <!-- KPI Cards Grid -->
+                    <div class="kpi-grid">
+                        <!-- KPI 1 -->
+                        <div class="kpi-card glassmorphic">
+                            <div class="kpi-icon-wrapper sales">
+                                <i data-lucide="dollar-sign"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span class="kpi-label">Total Clean Revenue</span>
+                                <h3 id="stat-total-sales">$0.00</h3>
+                                <span class="kpi-trend positive" id="stat-orders-count">0 Valid Orders</span>
+                            </div>
+                        </div>
+                        
+                        <!-- KPI 2 -->
+                        <div class="kpi-card glassmorphic">
+                            <div class="kpi-icon-wrapper average">
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span class="kpi-label">Average Order Value</span>
+                                <h3 id="stat-avg-order-val">$0.00</h3>
+                                <span class="kpi-trend" id="stat-aov-sub">Auto-corrected values</span>
+                            </div>
+                        </div>
+
+                        <!-- KPI 3 -->
+                        <div class="kpi-card glassmorphic">
+                            <div class="kpi-icon-wrapper health">
+                                <i data-lucide="activity"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span class="kpi-label">Pipeline Success Rate</span>
+                                <h3 id="stat-pipeline-health">0.0%</h3>
+                                <span class="kpi-trend" id="stat-total-runs">0 Total Syncs</span>
+                            </div>
+                        </div>
+
+                        <!-- KPI 4 -->
+                        <div class="kpi-card glassmorphic">
+                            <div class="kpi-icon-wrapper data-quality">
+                                <i data-lucide="shield-check"></i>
+                            </div>
+                            <div class="kpi-details">
+                                <span class="kpi-label">Data Ingestion Quality</span>
+                                <h3 id="stat-quality-rate">0.0%</h3>
+                                <span class="kpi-trend negative" id="stat-rejected-count">0 Rejected Records</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <div class="chart-card glassmorphic">
+                            <div class="chart-header">
+                                <h3>ETL Run Volume History</h3>
+                                <span class="chart-subtitle">Records processed vs rejected (last 10 runs)</span>
+                            </div>
+                            <div class="chart-container-inner">
+                                <canvas id="chart-run-history"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-card glassmorphic">
+                            <div class="chart-header">
+                                <h3>Revenue Share by Product</h3>
+                                <span class="chart-subtitle">Distribution of valid order values</span>
+                            </div>
+                            <div class="chart-container-inner">
+                                <canvas id="chart-product-share"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-card glassmorphic">
+                            <div class="chart-header">
+                                <h3>Data Quality Reject Audit</h3>
+                                <span class="chart-subtitle">Breakdown of validation errors by type</span>
+                            </div>
+                            <div class="chart-container-inner">
+                                <canvas id="chart-error-breakdown"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compact Logs preview (Last 5 Runs) -->
+                    <div class="preview-grid">
+                        <div class="preview-card glassmorphic">
+                            <div class="preview-header">
+                                <h3>Recent Executions</h3>
+                                <a href="#runs-history" class="btn-text" id="link-view-all-runs">View All <i data-lucide="arrow-right"></i></a>
+                            </div>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Run ID</th>
+                                            <th>Status</th>
+                                            <th>Synced At</th>
+                                            <th>Fetched</th>
+                                            <th>Inserted</th>
+                                            <th>Rejected</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table-recent-runs-body">
+                                        <!-- Javascript filled -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Run History Section -->
+                <section id="section-history" class="dashboard-section">
+                    <div class="section-card glassmorphic">
+                        <div class="section-header">
+                            <div>
+                                <h2>Pipeline Execution Logs</h2>
+                                <p>Comprehensive audit history of background and manual pipeline runs</p>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container large-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Run ID</th>
+                                        <th>Start Time</th>
+                                        <th>Duration</th>
+                                        <th>Status</th>
+                                        <th>Records Fetched</th>
+                                        <th>Valid Saved</th>
+                                        <th>Errors Rejected</th>
+                                        <th>System Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-full-runs-body">
+                                    <!-- Javascript filled -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Validation Failures Section -->
+                <section id="section-errors" class="dashboard-section">
+                    <div class="section-card glassmorphic">
+                        <div class="section-header">
+                            <div>
+                                <h2>Data Validation Failures</h2>
+                                <p>Rejected records from the ingestion layer with error trace breakdowns</p>
+                            </div>
+                        </div>
+                        
+                        <div class="table-container large-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Failed At</th>
+                                        <th>Run ID</th>
+                                        <th>Record #</th>
+                                        <th>Raw Payload Ingested</th>
+                                        <th>Quality Check Error Log</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-full-errors-body">
+                                    <!-- Javascript filled -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast System -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Script loading -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
