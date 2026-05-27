@@ -4,8 +4,16 @@ from contextlib import contextmanager
 
 # Define database directory and path relative to this file
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-DB_DIR = os.path.join(BASE_DIR, "data")
-DB_PATH = os.path.join(DB_DIR, "pipeline.db")
+
+# Check if running in Vercel serverless environment
+IS_VERCEL = os.environ.get("VERCEL") is not None
+
+if IS_VERCEL:
+    DB_DIR = "/tmp/data"
+    DB_PATH = "/tmp/pipeline.db"
+else:
+    DB_DIR = os.path.join(BASE_DIR, "data")
+    DB_PATH = os.path.join(DB_DIR, "pipeline.db")
 
 # Ensure the data directory exists
 os.makedirs(DB_DIR, exist_ok=True)
@@ -86,6 +94,12 @@ def init_db():
         """)
         
     print(f"Database initialized successfully at: {DB_PATH}")
+
+# Run initialization on import to ensure DB exists in ephemeral serverless environments
+try:
+    init_db()
+except Exception as e:
+    print(f"Warning: Auto-initialization of DB failed: {e}")
 
 if __name__ == "__main__":
     init_db()

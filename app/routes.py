@@ -1,7 +1,6 @@
 import os
 import json
 import random
-from datetime import datetime
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from app.db import get_db_conn
@@ -26,7 +25,8 @@ def trigger_pipeline():
     """
     # Trigger using local path or self URL.
     # Since server is local, pipeline can fetch directly from our mock route
-    api_url = "http://127.0.0.1:8000/api/mock-source"
+    port = os.environ.get("PORT", "8000")
+    api_url = f"http://127.0.0.1:{port}/api/mock-source"
     result = run_pipeline(api_url=api_url)
     if result["error"]:
         # Don't fail the HTTP response, return pipeline execution details indicating failure
@@ -76,6 +76,17 @@ def get_validation_errors():
 def get_dashboard_stats():
     """Aggregates database metrics for the KPIs panels."""
     try:
+        # Check if database is empty (common on Vercel cold starts)
+        is_empty = False
+        with get_db_conn() as conn:
+            count_row = conn.execute("SELECT COUNT(*) as count FROM cleaned_orders").fetchone()
+            if not count_row or (count_row["count"] or 0) == 0:
+                is_empty = True
+        
+        if is_empty:
+            # Pre-populate database with a mock data run synchronously
+            run_pipeline()
+
         with get_db_conn() as conn:
             # Sales stats
             sales_row = conn.execute("SELECT SUM(total_amount) as sales, COUNT(*) as counts FROM cleaned_orders").fetchone()
@@ -221,7 +232,8 @@ def download_csv_report():
     
     # If the file does not exist, trigger a pipeline run to populate database and create it
     if not os.path.exists(csv_file):
-        run_pipeline(api_url="http://127.0.0.1:8000/api/mock-source")
+        port = os.environ.get("PORT", "8000")
+        run_pipeline(api_url=f"http://127.0.0.1:{port}/api/mock-source")
         
     if not os.path.exists(csv_file):
         raise HTTPException(status_code=404, detail="No pipeline data available to export.")

@@ -17,20 +17,22 @@ async def lifespan(app: FastAPI):
     
     # 2. Setup Background Scheduler for ETL
     scheduler = BackgroundScheduler()
+    port = os.environ.get("PORT", "8000")
+    api_url = f"http://127.0.0.1:{port}/api/mock-source"
     scheduler.add_job(
         func=run_pipeline,
         trigger="interval",
         minutes=5,
-        args=["http://127.0.0.1:8000/api/mock-source"],
+        args=[api_url],
         id="etl_sync_job"
     )
     scheduler.start()
-    print("APScheduler started: Pipeline will sync every 5 minutes.")
+    print(f"APScheduler started: Pipeline will sync every 5 minutes targeting {api_url}.")
     
     # 3. Spin up initial run in a separate thread so startup is non-blocking
     threading.Thread(
         target=run_pipeline, 
-        args=("http://127.0.0.1:8000/api/mock-source",), 
+        args=(api_url,), 
         daemon=True
     ).start()
     print("Initial ETL pipeline run kicked off.")
@@ -55,7 +57,10 @@ app.include_router(router)
 # Resolve paths for static UI dashboard assets
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
-os.makedirs(STATIC_DIR, exist_ok=True)
+try:
+    os.makedirs(STATIC_DIR, exist_ok=True)
+except Exception:
+    pass
 
 # Mount the static files directory
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

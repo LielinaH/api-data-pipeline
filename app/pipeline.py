@@ -2,6 +2,7 @@ import os
 import uuid
 import json
 import logging
+import random
 from datetime import datetime
 import requests
 import pandas as pd
@@ -13,8 +14,16 @@ from pydantic import ValidationError
 
 # Set up paths relative to this file
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-LOG_DIR = os.path.join(BASE_DIR, "logs")
-REPORTS_DIR = os.path.join(BASE_DIR, "reports")
+
+# Check if running in Vercel serverless environment
+IS_VERCEL = os.environ.get("VERCEL") is not None
+
+if IS_VERCEL:
+    LOG_DIR = "/tmp/logs"
+    REPORTS_DIR = "/tmp/reports"
+else:
+    LOG_DIR = os.path.join(BASE_DIR, "logs")
+    REPORTS_DIR = os.path.join(BASE_DIR, "reports")
 
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -52,8 +61,6 @@ def fetch_raw_data(api_url: str = None) -> list:
             logger.warning(f"Could not connect to API ({type(e).__name__}: {e}). Falling back to in-memory generator.")
             
     # Fallback generator
-    # Import random locally to support counts bounds
-    import random
     logger.info("Using local generator fallback to fetch data.")
     return generate_mock_orders(random.randint(15, 30))
 
@@ -279,4 +286,6 @@ def export_cleaned_data_to_csv() -> str:
 
 if __name__ == "__main__":
     # Test execution
+    # Import mock_api's random to support fetch fallback bounds
+    import random
     run_pipeline()
